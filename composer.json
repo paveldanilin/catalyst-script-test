@@ -1,0 +1,18 @@
+{
+    "name": "pavel.danilin/catalyst-script-test",
+    "description": "CSV data uploader",
+    "autoload": {
+        "psr-4": {
+            "Pada\\CatalystScriptTest\\": "src/"
+        }
+    },
+    "authors": [
+        {
+            "name": "Pavel",
+            "email": "pavel.k.danilin@gmail.com"
+        }
+    ],
+    "require": {
+        "php": ">=7.4"
+    }
+}
