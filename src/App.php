@@ -11,9 +11,11 @@ use Pada\CatalystScriptTest\Console\OutputInterface;
 final class App
 {
     private ConsoleInterface $console;
+    private UserUploadServiceInterface $userUploadService;
 
-    public function __construct()
+    public function __construct(UserUploadServiceInterface $userUploadService)
     {
+        $this->userUploadService = $userUploadService;
         $this->console = (new Console('user_upload.php'))
             ->addDefinition(new OptionDefinition(
                 null,
@@ -51,28 +53,39 @@ final class App
     private function uploadCommand(OutputInterface $output, InputInterface $input): void
     {
         $this->checkRequiredDBOptions($output, $input);
-        $output->writeln('UPLOAD!');
+        $this->userUploadService->upload(
+            $input->getOption('file')->getValue(),
+            [
+                'driver' => 'mysql',
+                'user' => $input->getOption('u')->getValue(),
+                'password' => $input->getOption('p')->getValue(),
+                'host' => $input->getOption('h')->getValue()
+            ]
+        );
     }
 
     private function createTableCommand(OutputInterface $output, InputInterface $input): void
     {
         $this->checkRequiredDBOptions($output, $input);
-        $output->writeln('CREATE!');
+        $this->userUploadService->createTable(            [
+            'driver' => 'mysql',
+            'dbname' => 'users',
+            'user' => $input->getOption('u')->getValue(),
+            'password' => $input->getOption('p')->getValue(),
+            'host' => $input->getOption('h')->getValue()
+        ]);
     }
 
     private function checkRequiredDBOptions(OutputInterface $output, InputInterface $input): void
     {
         if (!$input->hasOption('u')) {
-            $output->writeln('[ERROR] Required [-u] option', ['color' => 'red']);
-            return;
+            throw new \RuntimeException('Required [-u] option');
         }
         if (!$input->hasOption('p')) {
-            $output->writeln('[ERROR] Required [-p] option', ['color' => 'red']);
-            return;
+            throw new \RuntimeException('Required [-p] option');
         }
         if (!$input->hasOption('h')) {
-            $output->writeln('[ERROR] Required [-h] option', ['color' => 'red']);
-            return;
+            throw new \RuntimeException('Required [-h] option');
         }
     }
 }
