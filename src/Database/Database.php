@@ -10,6 +10,8 @@ class Database implements DatabaseInterface
     public const DRIVER_MYSQL = 'mysql';
     public const DRIVER_SQLITE = 'sqlite';
 
+    private const DEFAULT_MYSQL_PORT = '3306';
+
     private string $driver;
     private ?\PDO $db;
     private ?string $lastError;
@@ -89,12 +91,22 @@ class Database implements DatabaseInterface
 
     private function mysqlConnection(array $options): \PDO
     {
-        $host = $this->requireOption('host', $options);
+        [$host, $port] = $this->parseHostname($this->requireOption('host', $options));
         $user = $this->requireOption('user', $options);
         $pass = $this->requireOption('password', $options);
         $dbname = $this->requireOption('dbname', $options);
         $extraOptions = $options['options'] ?? [];
-        return new \PDO("mysql:host=$host;dbname=$dbname", $user, $pass, $extraOptions);
+        return new \PDO("mysql:host=$host;dbname=$dbname;port=$port", $user, $pass, $extraOptions);
+    }
+
+    private function parseHostname(string $hostname): array
+    {
+        if (\strpos($hostname, ':') === false) {
+            return [$hostname, self::DEFAULT_MYSQL_PORT];
+        }
+
+        $p = \explode(':', $hostname);
+        return [$p[0], $p[1]];
     }
 
     private function sqliteConnection(array $options): \PDO
@@ -115,7 +127,7 @@ class Database implements DatabaseInterface
 
     private function ddlColumn(string $columnName, array $columnOptions): string
     {
-        $type = $this->getDriverStringType($this->driver, $columnOptions['type'] ?? 'string');
+        $type = $this->getDriverStringType($this->driver);
         $nullable = ($columnOptions['nullable'] ?? true) === true ? '' : ' NOT NULL';
         $unique = ($columnOptions['unique'] ?? false) === true ? ' UNIQUE' : '';
         return $columnName . ' ' . $type . $nullable . $unique;
@@ -129,6 +141,7 @@ class Database implements DatabaseInterface
             case self::DRIVER_MYSQL:
                 return "VARCHAR($len)";
         }
+        throw new \RuntimeException('Unknown driver');
     }
 
     private function requireOption(string $optName, array $options): string

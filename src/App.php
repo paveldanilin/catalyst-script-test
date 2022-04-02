@@ -57,6 +57,7 @@ final class App
             $input->getOption('file')->getValue(),
             [
                 'driver' => 'mysql',
+                'dbname' => 'customer',
                 'user' => $input->getOption('u')->getValue(),
                 'password' => $input->getOption('p')->getValue(),
                 'host' => $input->getOption('h')->getValue()
@@ -69,7 +70,7 @@ final class App
         $this->checkRequiredDBOptions($output, $input);
         $this->userUploadService->createTable(            [
             'driver' => 'mysql',
-            'dbname' => 'users',
+            'dbname' => 'customer',
             'user' => $input->getOption('u')->getValue(),
             'password' => $input->getOption('p')->getValue(),
             'host' => $input->getOption('h')->getValue()
