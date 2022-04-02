@@ -82,7 +82,7 @@ final class App
     private function uploadUsersCommand(OutputInterface $output, InputInterface $input): void
     {
         $this->checkRequiredDBOptions($output, $input);
-        $this->userUploadService->upload(
+        $errors = $this->userUploadService->upload(
             $input->getOption('file')->getValue(),
             [
                 'driver' => 'mysql',
@@ -92,6 +92,10 @@ final class App
                 'host' => $input->getOption('h')->getValue()
             ]
         );
+
+        foreach ($errors as $error) {
+            $output->writeln($error, ['color' => 'red']);
+        }
     }
 
     private function createTableCommand(OutputInterface $output, InputInterface $input): void
