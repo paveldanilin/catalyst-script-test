@@ -14,8 +14,9 @@ final class OptionDefinition
     /** @var callable|null */
     private $commandHandler;
     private ?string $description;
+    private ?string $valueHint;
 
-    public function __construct(?string $shortName, ?string $longName, int $valueMode, ?string $description, ?callable $commandHandler = null)
+    public function __construct(?string $shortName, ?string $longName, int $valueMode, ?string $description, ?callable $commandHandler = null, ?string $valueHint = null)
     {
         $this->setShortName($shortName);
         $this->setLongName($longName);
@@ -25,6 +26,7 @@ final class OptionDefinition
         $this->valueMode = $valueMode;
         $this->commandHandler = $commandHandler;
         $this->description = $description;
+        $this->valueHint = $valueHint;
     }
 
     public function getShortName(): ?string
@@ -88,5 +90,10 @@ final class OptionDefinition
     public function getDescription(): ?string
     {
         return $this->description;
+    }
+
+    public function getValueHint(): ?string
+    {
+        return $this->valueHint;
     }
 }

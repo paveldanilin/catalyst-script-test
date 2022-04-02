@@ -127,13 +127,13 @@ final class Console implements ConsoleInterface
         });
 
         foreach ($shortDefs as $shortDef) {
-            $buffer[] = "\t[-" . $shortDef->getShortName() . $this->stringifyOptionValueMode($shortDef->getValueMode()) . "] " . $shortDef->getDescription();
+            $buffer[] = "\t[-" . $shortDef->getShortName() . $this->stringifyOptionValueMode($shortDef) . "] " . $shortDef->getDescription();
         }
         foreach ($longDefs as $longDef) {
             if ($longDef->getLongName() === 'help') {
                 continue;
             }
-            $buffer[] = "\t[--" . $longDef->getLongName() . $this->stringifyOptionValueMode($longDef->getValueMode()) . "] " . $longDef->getDescription();
+            $buffer[] = "\t[--" . $longDef->getLongName() . $this->stringifyOptionValueMode($longDef) . "] " . $longDef->getDescription();
         }
 
         foreach ($buffer as $line) {
@@ -152,22 +152,22 @@ final class Console implements ConsoleInterface
         });
 
         foreach ($shortDefs as $shortDef) {
-            $str .= ' [-' . $shortDef->getShortName() . $this->stringifyOptionValueMode($shortDef->getValueMode()) . ']';
+            $str .= ' [-' . $shortDef->getShortName() . $this->stringifyOptionValueMode($shortDef) . ']';
         }
         foreach ($longDefs as $longDef) {
-            $str .= ' [--' . $longDef->getLongName() . $this->stringifyOptionValueMode($longDef->getValueMode()) . ']';
+            $str .= ' [--' . $longDef->getLongName() . $this->stringifyOptionValueMode($longDef) . ']';
         }
 
         return $str;
     }
 
-    private function stringifyOptionValueMode(int $valueMode): string
+    private function stringifyOptionValueMode(OptionDefinition $optionDefinition): string
     {
         $v = '';
-        if ($valueMode === OptionDefinition::VALUE_REQUIRED) {
-            $v = '=value';
-        } elseif($valueMode === OptionDefinition::VALUE_OPTIONAL) {
-            $v = '[=value]';
+        if ($optionDefinition->getValueMode() === OptionDefinition::VALUE_REQUIRED) {
+            $v = '=' . ($optionDefinition->getValueHint() ?? 'value');
+        } elseif($optionDefinition->getValueMode() === OptionDefinition::VALUE_OPTIONAL) {
+            $v = '[=' . ($optionDefinition->getValueHint() ?? 'value') . ']';
         }
         return $v;
     }
