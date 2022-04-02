@@ -3,16 +3,19 @@
 namespace Pada\CatalystScriptTest;
 
 use Pada\CatalystScriptTest\Database\DatabaseInterface;
+use Pada\CatalystScriptTest\Reader\ReaderInterface;
 
 final class UserUploadService implements UserUploadServiceInterface
 {
     private DatabaseInterface $database;
+    private ReaderInterface $reader;
     private string $usersTable;
 
-    public function __construct(DatabaseInterface $database, string $usersTable)
+    public function __construct(DatabaseInterface $database, string $usersTable, ReaderInterface $reader)
     {
         $this->database = $database;
         $this->usersTable = $usersTable;
+        $this->reader = $reader;
     }
 
     public function upload(string $csvFilename, array $dbOptions): void
@@ -24,11 +27,18 @@ final class UserUploadService implements UserUploadServiceInterface
             throw new \RuntimeException('Table "'.$this->usersTable.'" not exists');
         }
 
-        $this->database->beginTransaction();
+        //$this->database->beginTransaction();
 
-        // TODO: batch upload
+        $csvOpts = [
+            'filename' => $csvFilename,
+            'with_headers' => true,
+        ];
 
-        $this->database->commit();
+        foreach ($this->reader->nextRow($csvOpts) as $row) {
+            var_dump($row);
+        }
+
+        //$this->database->commit();
     }
 
     public function createTable(array $dbOptions): void
