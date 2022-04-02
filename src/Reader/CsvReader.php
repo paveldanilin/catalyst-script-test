@@ -15,7 +15,7 @@ class CsvReader implements ReaderInterface
     }
 
     // Going to use a Generator feature since we don't want to read all file in memory.
-    public function nextRow(array $options): \Generator
+    public function next(array $options): \Generator
     {
         // A path to the file
         $filename = $this->requireOption('filename', $options);
@@ -41,15 +41,17 @@ class CsvReader implements ReaderInterface
 
             // Headers definition
             if ($withHeaders && 0 === $rowNum) {
-                $headers = $row;
+                $headers = \array_map(static function (string $headerName) {
+                    return \strtolower($headerName);
+                }, $row);
                 $rowNum++;
                 continue;
             }
 
             if ($withHeaders) {
-                yield \array_combine($headers, $row);
+                yield [$rowNum, \array_combine($headers, $row)];
             } else {
-                yield $row;
+                yield [$rowNum, $row];
             }
             $rowNum++;
         }

@@ -4,5 +4,9 @@ namespace Pada\CatalystScriptTest\Reader;
 
 interface ReaderInterface
 {
-    public function nextRow(array $options): \Generator;
+    /**
+     * @param array $options
+     * @return \Generator<array<int, array>>
+     */
+    public function next(array $options): \Generator;
 }
