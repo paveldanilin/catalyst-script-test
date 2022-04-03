@@ -28,7 +28,7 @@ usage: user_upload.php  [-u=username] [-p=password] [-h=hostname|hostname:port] 
 
 #### Output
 
-In case of any error the first block will be an error block.
+In case of any failure the first block will be an error block.
 Each error has a reference to a line in the CSV file.
 
 #### Error output
@@ -52,7 +52,7 @@ Email is not valid email='edward@jikes@com.au' at line 12
 
 ### Log
 In case when we want to keep history of the script run we can specify the `--log` option.
-Then the log file will be created at the same directory with the script file (uploader-[year]-[month]-[day].log).
+Then the log file will be created at the same directory with the script/phar file (file name template: `uploader-[year]-[month]-[day].log`).
 
 ### Configuration
 A main configuration is located at the `config.php` file.

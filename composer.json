@@ -34,6 +34,7 @@
             "php ./vendor/bin/phpunit --testdox"
         ],
         "box": [
+            "composer install",
             "php scripts/rmdir.php ./build",
             "php scripts/mkdir.php ./build",
             "php scripts/cpdir.php ./src ./build/src",
