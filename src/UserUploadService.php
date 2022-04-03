@@ -4,6 +4,7 @@ namespace Pada\CatalystScriptTest;
 
 use Pada\CatalystScriptTest\Database\DatabaseInterface;
 use Pada\CatalystScriptTest\Reader\ReaderInterface;
+use Pada\CatalystScriptTest\Transformer\TransformerManagerInterface;
 use Pada\CatalystScriptTest\Validator\InvalidValueException;
 use Pada\CatalystScriptTest\Validator\ValidatorManagerInterface;
 
@@ -12,14 +13,20 @@ final class UserUploadService implements UserUploadServiceInterface
     private DatabaseInterface $database;
     private ReaderInterface $reader;
     private ValidatorManagerInterface $validatorManager;
+    private TransformerManagerInterface $transformerManager;
     private ConfigInterface $config;
 
-    public function __construct(ConfigInterface $config, DatabaseInterface $database, ReaderInterface $reader, ValidatorManagerInterface $validatorManager)
+    public function __construct(ConfigInterface $config,
+                                DatabaseInterface $database,
+                                ReaderInterface $reader,
+                                ValidatorManagerInterface $validatorManager,
+                                TransformerManagerInterface $transformerManager)
     {
         $this->config = $config;
         $this->database = $database;
         $this->reader = $reader;
         $this->validatorManager = $validatorManager;
+        $this->transformerManager = $transformerManager;
     }
 
     public function upload(string $csvFilename, array $dbOptions): array
@@ -36,22 +43,33 @@ final class UserUploadService implements UserUploadServiceInterface
         $columnMapping = $this->config->getColumnMapping();
         $csvOpts = [
             'filename' => $csvFilename,
-            'with_headers' => true,
+            'with_headers' => true, // Treats the first line as a header line
         ];
         $errors = [];
 
         foreach ($this->reader->next($csvOpts) as $row) {
             [$rowNum, $rowData] = $row;
+            $isDataValid = true;
+            $dataToInsert = [];
 
             foreach ($rowData as $columnName => $columnValue) {
-                $validatorName = $columnMapping[$columnName]['validator'] ?? null;
-                if (null !== $validatorName) {
-                    try {
-                        $this->validatorManager->getValidator($validatorName)->validate($columnValue);
-                    } catch (InvalidValueException $invalidValueException) {
-                        $errors[] = $invalidValueException->getMessage() . ' [' . $columnValue . '] at line ' . ($rowNum + 1);
-                    }
+                // Validate value
+                $validators= $columnMapping[$columnName]['validator'] ?? [];
+                try {
+                    $this->validatorManager->validate($columnValue, $validators);
+                } catch (InvalidValueException $invalidValueException) {
+                    $errors[] = $invalidValueException->getMessage() . ' [' . $columnValue . '] at line ' . ($rowNum + 1);
+                    $isDataValid = false;
+                    break; // The value is invalid, skip the row
                 }
+
+                // Transform value
+                $transformers = $columnMapping[$columnName]['transformer'] ?? [];
+                $dataToInsert[$columnName] = $this->transformerManager->transformer($columnValue, $transformers);
+            }
+
+            if ($isDataValid) {
+                print "INSERT ->" . print_r($dataToInsert, true) . "\n";
             }
         }
 

@@ -12,10 +12,22 @@ final class ValidatorManager implements ValidatorManagerInterface
         $this->validators = [];
     }
 
-    public function addValidator(string $name, ValidatorInterface $validator): self
+    public function addValidator(ValidatorInterface $validator): self
     {
-        $this->validators[$name] = $validator;
+        $this->validators[$validator->getName()] = $validator;
         return $this;
+    }
+
+    /**
+     * @param mixed $value
+     * @param array<string> $validatorStack
+     * @return void
+     */
+    public function validate($value, array $validatorStack): void
+    {
+        foreach ($validatorStack as $validatorName) {
+            $this->getValidator($validatorName)->validate($value);
+        }
     }
 
     public function getValidator(string $name): ValidatorInterface
