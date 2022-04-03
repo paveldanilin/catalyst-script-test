@@ -12,11 +12,11 @@ use Pada\CatalystScriptTest\Validator\EmailValidator;
 use Pada\CatalystScriptTest\Validator\StringValidator;
 use Pada\CatalystScriptTest\Validator\ValidatorManager;
 
-require "./vendor/autoload.php";
+require "vendor/autoload.php";
 
 // Can be read from the external config file
 // Keep it in a script for simplicity
-$configData = include './config.php';
+$configData = include 'config.php';
 $config = new ArrayConfig($configData);
 
 // Validator manager

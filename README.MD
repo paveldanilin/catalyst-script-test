@@ -1,5 +1,14 @@
 # User upload
 
+### Requirements
+- PHP >= 7.4
+- PDO MySQL extension
+- composer (2.3.3)
+
+### Distribution
+- As a phar file (see the Build section)
+- As a folder (dependencies must be installed, see the Build section)
+
 ### Usage
 ```console
 % php user_upload.php --help                                                               
@@ -100,12 +109,17 @@ Each column can be described by means of the following parameters:
 ```
 
 ### Build
-A composer tool is required.
+A composer tool is required (Tested with the `2.3.3` version).
 
 Install dependencies:
 - `composer install`
 
+#### PHAR
+To build an executable phar run `composer box`.
+A built executable can be found at `./build/user_upload.phar`
+
 ### Test
+PHPstan + UnitTest
 - `composer test`
 
 ### Docker

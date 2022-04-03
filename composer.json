@@ -25,12 +25,24 @@
     },
     "require-dev": {
         "phpunit/phpunit": "^9",
-        "phpstan/phpstan": "^0.12"
+        "phpstan/phpstan": "^0.12",
+        "humbug/box": "3.16.0"
     },
     "scripts": {
         "test": [
             "php -d memory_limit=4G ./vendor/bin/phpstan analyse -c phpstan.neon",
             "php ./vendor/bin/phpunit --testdox"
+        ],
+        "box": [
+            "php scripts/rmdir.php ./build",
+            "php scripts/mkdir.php ./build",
+            "php scripts/cpdir.php ./src ./build/src",
+            "php scripts/cp.php ./composer.json ./build/composer.json",
+            "php scripts/cp.php ./user_upload.php ./build/user_upload.php",
+            "php scripts/cp.php ./config.php ./build/config.php",
+            "php scripts/cp.php ./box.json ./build/box.json",
+            "composer install --no-dev --optimize-autoloader --classmap-authoritative --working-dir=./build",
+            "php ./vendor/bin/box build -v --working-dir=./build"
         ]
     }
 }
