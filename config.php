@@ -11,11 +11,13 @@ return [
         'name' => [
             'type' => 'string',
             'nullable' => false,
+            'validator' => ['string' => ['min_length' => 1, 'max_length' => 255]],
             'transformer' => ['lower', 'ucfirst']
         ],
         'surname' => [
             'type' => 'string',
             'nullable' => false,
+            'validator' => ['string' => ['min_length' => 1, 'max_length' => 255]],
             'transformer' => ['lower', 'ucfirst']
         ],
         'email' => [

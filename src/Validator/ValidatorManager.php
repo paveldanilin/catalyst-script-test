@@ -20,13 +20,20 @@ final class ValidatorManager implements ValidatorManagerInterface
 
     /**
      * @param mixed $value
-     * @param array<string> $validatorStack
+     * @param array $validatorStack
      * @return void
      */
     public function validate($value, array $validatorStack): void
     {
-        foreach ($validatorStack as $validatorName) {
-            $this->getValidator($validatorName)->validate($value);
+        foreach ($validatorStack as $k => $v) {
+            if (\is_string($k)) {
+                $validatorName = $k;
+                $validatorOptions = \is_array($v) === true ? $v : [$v];
+            } else {
+                $validatorName = $v;
+                $validatorOptions = [];
+            }
+            $this->getValidator($validatorName)->validate($value, $validatorOptions);
         }
     }
 

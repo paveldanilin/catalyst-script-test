@@ -6,7 +6,7 @@ interface ValidatorManagerInterface
 {
     /**
      * @param mixed $value
-     * @param array<string> $validatorStack
+     * @param array $validatorStack
      * @return void
      */
     public function validate($value, array $validatorStack): void;
