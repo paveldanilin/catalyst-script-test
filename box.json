@@ -1,0 +1,8 @@
+{
+  "chmod": "0755",
+  "directories": ["src", "vendor"],
+  "files": ["config.php", "composer.json"],
+  "main": "user_upload.php",
+  "output": "user_upload.phar",
+  "stub": true
+}
