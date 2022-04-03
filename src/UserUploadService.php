@@ -97,7 +97,7 @@ final class UserUploadService implements UserUploadServiceInterface
                 // Perhaps would be better to move a transformation block above a validation block.
                 // It will give a chance to fix invalid values.
                 $transformers = $columnMapping[$columnName]['transformer'] ?? [];
-                $dataToInsert[$columnName] = $this->transformerManager->transformer($columnValue, $transformers);
+                $dataToInsert[$columnName] = $this->transformerManager->transform($columnValue, $transformers);
             }
 
             if ($isDataValid && !$dryRun) {

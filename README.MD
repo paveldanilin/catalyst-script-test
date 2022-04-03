@@ -14,6 +14,34 @@ usage: user_upload.php  [-u=username] [-p=password] [-h=hostname|hostname:port] 
 [--log] Write log
 ```
 
+#### Output
+
+In case of any error the first block will be an error block.
+Each error has a reference to a line in the CSV file.
+
+#### Error output
+
+```console
+Duplicate entry 'ham@seek.com' for key 'users.email' at line 8
+Email is not valid email='edward@jikes@com.au' at line 12
+```
+
+#### Stat block 
+
+```console
+* Processed:11
+* Inserted: 9
+* Skipped:  2
+```
+
+- `Processed` - a total number of processed lines from the CSV file.
+- `Inserted` - a number of inserted rows into DB.
+- `Skipped` - a number of skipped rows. A row can be skipped in case of whether invalid value or DB error.
+
+### Log
+In case when we want to keep history of the script run we can specify the `--log` option.
+Then the log file will be created at the same directory with the script file (uploader-[year]-[month]-[day].log).
+
 ### Configuration
 A main configuration is located at the `config.php` file.
 
@@ -90,3 +118,23 @@ Test MySQL server
 * User: `app`
 * Password: `password`
 * Host: `127.0.0.1`
+
+#### Upload file
+```console
+php user_upload.php --file ./data/users.csv -u user -p password -d customer -h 127.0.0.1
+```
+
+#### Upload file with dry_run
+```console
+php user_upload.php --file ./data/users.csv -u user -p password -d customer -h 127.0.0.1 --dry_run
+```
+
+#### Create table 
+```console
+php user_upload.php --create_table -u user -p password -h 127.0.0.1 -d customer
+```
+
+#### Different MySQL port (for example 6603)
+```console
+php user_upload.php --create_table -u user -p password -h 127.0.0.1:6603 -d customer
+```

@@ -26,7 +26,7 @@ final class TransformerManager implements TransformerManagerInterface
         return $t;
     }
 
-    public function transformer($value, array $transformerStack, bool $throws = false)
+    public function transform($value, array $transformerStack, bool $throws = false)
     {
         $out = $value;
         foreach ($transformerStack as $transformerName) {
