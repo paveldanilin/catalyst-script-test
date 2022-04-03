@@ -44,7 +44,7 @@ final class App
                 null,
                 'dry_run',
                 OptionDefinition::VALUE_NONE,
-                'Database not will be altered'
+                'Should be used with --file directive, omits all database interaction'
             ))
             ->addDefinition(new OptionDefinition(
                 'u',
