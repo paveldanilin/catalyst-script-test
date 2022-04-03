@@ -7,6 +7,8 @@ use Pada\CatalystScriptTest\Reader\ReaderInterface;
 use Pada\CatalystScriptTest\Transformer\TransformerManagerInterface;
 use Pada\CatalystScriptTest\Validator\InvalidValueException;
 use Pada\CatalystScriptTest\Validator\ValidatorManagerInterface;
+use Psr\Log\LoggerInterface;
+use Psr\Log\NullLogger;
 
 final class UserUploadService implements UserUploadServiceInterface
 {
@@ -18,6 +20,7 @@ final class UserUploadService implements UserUploadServiceInterface
     private ValidatorManagerInterface $validatorManager;
     private TransformerManagerInterface $transformerManager;
     private ConfigInterface $config;
+    private LoggerInterface $logger;
 
     public function __construct(ConfigInterface $config,
                                 DatabaseInterface $database,
@@ -30,14 +33,22 @@ final class UserUploadService implements UserUploadServiceInterface
         $this->reader = $reader;
         $this->validatorManager = $validatorManager;
         $this->transformerManager = $transformerManager;
+        $this->logger = new NullLogger();
     }
 
-    public function upload(string $csvFilename, array $dbOptions, bool $dryRun): array
+    // TODO: a method too long, should be refactored
+    public function upload(string $csvFilename, array $dbOptions, bool $dryRun): UploadResult
     {
-        // TODO: read CSV
+        $this->logger->debug('Before upload', [
+            'csv_filename' => $csvFilename,
+            'db_options' => $dbOptions,
+            'dry_run' => $dryRun,
+        ]);
+
         $this->dbConnect($dbOptions);
 
         if (!$this->database->tableExists($this->config->getTableName())) {
+            $this->logger->error('Table "'.$this->config->getTableName().'" not exists');
             throw new \RuntimeException('Table "'.$this->config->getTableName().'" not exists');
         }
 
@@ -47,8 +58,11 @@ final class UserUploadService implements UserUploadServiceInterface
             'with_headers' => true, // Treats the first line as a header line
         ];
         $errors = [];
-        $batchSize = 1;
+        $batchSize = 1; // TODO: should be moved to the config
         $batch = [];
+        $rowNum = 0;
+        $inserted = 0;
+        $skipped = 0;
 
         foreach ($this->reader->next($csvOpts) as $row) {
             [$rowNum, $rowData] = $row;
@@ -56,29 +70,41 @@ final class UserUploadService implements UserUploadServiceInterface
             $dataToInsert = [];
 
             foreach ($rowData as $columnName => $columnValue) {
-                // Validate value
+                // 1. Validate value
                 $validators= $columnMapping[$columnName]['validator'] ?? [];
                 try {
                     $this->validatorManager->validate($columnValue, $validators);
                 } catch (InvalidValueException $invalidValueException) {
                     $errors[] = $invalidValueException->getMessage() . ' \'' . $columnValue . '\' at line ' . ($rowNum + 1);
                     $isDataValid = false;
+                    $this->logger->warning('Invalid value at the "' . $columnName . '" column value=[' . $columnValue . '] a row will be skipped', [
+                        'validator' => $invalidValueException->getValidator()->getName(),
+                        'row' => $rowData,
+                        'row_num' => $rowNum,
+                        'column_value' => $columnValue,
+                        'column_name' => $columnName,
+                        'error' => $invalidValueException->getMessage(),
+                    ]);
+                    $skipped++;
                     break; // The value is invalid, skip the row
                 }
 
-                // Transform value
+                // 2. Transform value
+                // Perhaps would be better to move a transformation block above a validation block.
+                // It will give a chance to fix invalid values.
                 $transformers = $columnMapping[$columnName]['transformer'] ?? [];
                 $dataToInsert[$columnName] = $this->transformerManager->transformer($columnValue, $transformers);
             }
 
-            if ($isDataValid) {
+            if ($isDataValid && !$dryRun) {
                 $batch[] = $dataToInsert;
                 if (\count($batch) === $batchSize) {
-                    if (!$dryRun) {
-                        [$opCode, $opMessage] = $this->insertBatch($batch);
-                        if (self::INSERT_CODE_OK !== $opCode) {
-                            $errors[] = $opMessage . ' at line ' . ($rowNum + 1);
-                        }
+                    [$opCode, $opMessage] = $this->insertBatch($batch);
+                    if (self::INSERT_CODE_OK === $opCode) {
+                        $inserted += \count($batch);
+                    } else {
+                        $errors[] = $opMessage . ' at line ' . ($rowNum + 1);
+                        $this->logger->error('Could not insert a batch: ' . $opMessage . ' at line ' . ($rowNum + 1));
                     }
                     $batch = [];
                 }
@@ -87,12 +113,20 @@ final class UserUploadService implements UserUploadServiceInterface
 
         if (!$dryRun) {
             [$opCode, $opMessage] = $this->insertBatch($batch);
-            if (self::INSERT_CODE_OK !== $opCode) {
+            if (self::INSERT_CODE_OK === $opCode) {
+                $inserted += \count($batch);
+            } else {
                 $errors[] = $opMessage . ' at line ' . ($rowNum + 1);
+                $this->logger->error('Could not insert a batch: ' . $opMessage . ' at line ' . ($rowNum + 1));
             }
         }
 
-        return $errors;
+        $this->logger->debug('After upload', [
+            'inserted_rows' => $inserted,
+            'processed_rows' => $rowNum,
+        ]);
+
+        return new UploadResult($inserted, $rowNum, $skipped, $errors);
     }
 
     /**
@@ -117,16 +151,25 @@ final class UserUploadService implements UserUploadServiceInterface
     {
         $this->dbConnect($dbOptions);
         if ($this->database->tableExists($this->config->getTableName())) {
+            $this->logger->error('Could not create table: ' .
+                'the table "'.$this->config->getTableName().'" already exists');
             throw new \RuntimeException('The table "'.$this->config->getTableName().'" already exists');
         }
         $this->database->createTable($this->config->getTableName(), $this->config->getColumnMapping());
+        $this->logger->debug('The table "' . $this->config->getTableName() . '" has been created');
     }
 
     private function dbConnect(array $dbOptions): void
     {
         if (!$this->database->open($dbOptions)) {
+            $this->logger->error('Could not connect to database: ' . $this->database->getLastError());
             throw new \RuntimeException('Could not connect to the database, please check connection options. ' .
                 $this->database->getLastError());
         }
+    }
+
+    public function setLogger(LoggerInterface $logger): void
+    {
+        $this->logger = $logger;
     }
 }

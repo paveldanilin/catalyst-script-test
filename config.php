@@ -26,4 +26,9 @@ return [
             'transformer' => ['lower']
         ]
     ],
+
+    'log' => [
+        'dir' => './',
+        'filename' => 'uploader.log',
+    ]
 ];

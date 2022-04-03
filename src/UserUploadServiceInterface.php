@@ -2,7 +2,9 @@
 
 namespace Pada\CatalystScriptTest;
 
-interface UserUploadServiceInterface
+use Psr\Log\LoggerAwareInterface;
+
+interface UserUploadServiceInterface extends LoggerAwareInterface
 {
     /**
      * Uploads user's data from the specified file to a database.
@@ -10,8 +12,8 @@ interface UserUploadServiceInterface
      * @param string $csvFilename
      * @param array $dbOptions
      * @param bool $dryRun
-     * @return array<string>
+     * @return UploadResult
      */
-    public function upload(string $csvFilename, array $dbOptions, bool $dryRun): array;
+    public function upload(string $csvFilename, array $dbOptions, bool $dryRun): UploadResult;
     public function createTable(array $dbOptions): void;
 }
