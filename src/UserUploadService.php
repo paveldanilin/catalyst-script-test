@@ -45,6 +45,10 @@ final class UserUploadService implements UserUploadServiceInterface
             'dry_run' => $dryRun,
         ]);
 
+        if (!\file_exists($csvFilename)) {
+            throw new \RuntimeException('A CSV file not found "' . $csvFilename . '"');
+        }
+
         $this->dbConnect($dbOptions);
 
         if (!$this->database->tableExists($this->config->getTableName())) {
