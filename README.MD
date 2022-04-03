@@ -8,6 +8,18 @@ Please find a logic test script as `foobar.php`.
 - PDO MySQL extension
 - composer (2.3.3)
 
+### CSV format
+A comma sign is used as a separator.
+The first line of the CSV file represents a header line (`name,surname,email`).
+
+Columns description (for more details see the Configuration section)
+
+| Column    | DB                                        | Transformer    | Validator                            |
+|-----------|-------------------------------------------|----------------|--------------------------------------|
+| name      | varchar(255), nullable=false              | lower, ucfirst | string: min_length=1, max_length=255 |
+| surname   | varchar(255), nullable=false              | lower, ucfirst | string: min_length=1, max_length=255 |
+| email     | varchar(255), nullable=false, unique=true | lower          | email                                | 
+
 ### Distribution
 - As a standalone phar file (see the Build section)
 - As a folder (dependencies must be installed, see the Build section)
