@@ -25,6 +25,9 @@ final class OptionValue
         return $this->definition;
     }
 
+    /**
+     * @return mixed
+     */
     public function getValue()
     {
         return $this->value;

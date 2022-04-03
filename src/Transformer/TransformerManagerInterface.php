@@ -13,7 +13,7 @@ interface TransformerManagerInterface
      * @throws \InvalidArgumentException
      * @return mixed
      */
-    public function transformer($value, array $transformerStack, bool $throws = false);
+    public function transform($value, array $transformerStack, bool $throws = false);
 
     /**
      * @param string $name

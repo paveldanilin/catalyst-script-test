@@ -6,6 +6,11 @@
             "Pada\\CatalystScriptTest\\": "src/"
         }
     },
+    "autoload-dev": {
+        "psr-4": {
+            "Pada\\CatalystScriptTest\\Tests\\": "tests/"
+        }
+    },
     "authors": [
         {
             "name": "Pavel",
@@ -17,5 +22,15 @@
         "ext-pdo": "*",
         "psr/log": "1.1.4",
         "monolog/monolog": "2.4.0"
+    },
+    "require-dev": {
+        "phpunit/phpunit": "^9",
+        "phpstan/phpstan": "^0.12"
+    },
+    "scripts": {
+        "test": [
+            "php -d memory_limit=4G ./vendor/bin/phpstan analyse -c phpstan.neon",
+            "php ./vendor/bin/phpunit --testdox"
+        ]
     }
 }

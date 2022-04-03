@@ -154,10 +154,23 @@ class Database implements DatabaseInterface
 
     private function ddlColumn(string $columnName, array $columnOptions): string
     {
-        $type = $this->getDriverStringType($this->driver);
+        $type = \strtolower($columnOptions['type'] ?? 'string');
+        switch ($type) {
+            case 'string':
+                $dbType = $this->getDriverStringType($this->driver);
+                break;
+            case 'int':
+            case 'integer':
+                $dbType = $this->getDriverIntegerType($this->driver);
+                break;
+            default:
+                $dbType = $this->getDriverStringType($this->driver);
+                break;
+        }
+
         $nullable = ($columnOptions['nullable'] ?? true) === true ? '' : ' NOT NULL';
         $unique = ($columnOptions['unique'] ?? false) === true ? ' UNIQUE' : '';
-        return $columnName . ' ' . $type . $nullable . $unique;
+        return $columnName . ' ' . $dbType . $nullable . $unique;
     }
 
     private function getDriverStringType(string $driver, int $len = 255): string
@@ -167,6 +180,15 @@ class Database implements DatabaseInterface
                 return 'TEXT';
             case self::DRIVER_MYSQL:
                 return "VARCHAR($len)";
+        }
+        throw new \RuntimeException('Unknown driver');
+    }
+
+    private function getDriverIntegerType(string $driver): string
+    {
+        switch ($driver) {
+            case self::DRIVER_MYSQL:
+                return "INTEGER";
         }
         throw new \RuntimeException('Unknown driver');
     }

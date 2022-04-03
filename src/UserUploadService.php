@@ -13,7 +13,7 @@ use Psr\Log\NullLogger;
 final class UserUploadService implements UserUploadServiceInterface
 {
     private const INSERT_CODE_OK = 0;
-    private const INSERT_CODE_DUPLICATE = 100;
+    private const INSERT_CODE_DUPLICATE = 1062;
 
     private DatabaseInterface $database;
     private ReaderInterface $reader;
@@ -44,6 +44,10 @@ final class UserUploadService implements UserUploadServiceInterface
             'db_options' => $dbOptions,
             'dry_run' => $dryRun,
         ]);
+
+        if (!\file_exists($csvFilename)) {
+            throw new \RuntimeException('A CSV file not found "' . $csvFilename . '"');
+        }
 
         $this->dbConnect($dbOptions);
 
@@ -93,7 +97,7 @@ final class UserUploadService implements UserUploadServiceInterface
                 // Perhaps would be better to move a transformation block above a validation block.
                 // It will give a chance to fix invalid values.
                 $transformers = $columnMapping[$columnName]['transformer'] ?? [];
-                $dataToInsert[$columnName] = $this->transformerManager->transformer($columnValue, $transformers);
+                $dataToInsert[$columnName] = $this->transformerManager->transform($columnValue, $transformers);
             }
 
             if ($isDataValid && !$dryRun) {
@@ -104,6 +108,7 @@ final class UserUploadService implements UserUploadServiceInterface
                         $inserted += \count($batch);
                     } else {
                         $errors[] = $opMessage . ' at line ' . ($rowNum + 1);
+                        $skipped++;
                         $this->logger->error('Could not insert a batch: ' . $opMessage . ' at line ' . ($rowNum + 1));
                     }
                     $batch = [];
@@ -117,6 +122,7 @@ final class UserUploadService implements UserUploadServiceInterface
                 $inserted += \count($batch);
             } else {
                 $errors[] = $opMessage . ' at line ' . ($rowNum + 1);
+                $skipped++;
                 $this->logger->error('Could not insert a batch: ' . $opMessage . ' at line ' . ($rowNum + 1));
             }
         }
@@ -131,18 +137,23 @@ final class UserUploadService implements UserUploadServiceInterface
     }
 
     /**
+     * Returns [operationCode, operationMessage]
      * @param array $batch
-     * @return array<int, string|null> <operationCode, message>
+     * @return array
      */
     private function insertBatch(array $batch): array
     {
         try {
             $this->database->insertBatch($this->config->getTableName(), $batch);
-            return [self::INSERT_CODE_OK, null];
+            return [self::INSERT_CODE_OK, ''];
         } catch (\PDOException $exception) {
             $errCode = $exception->errorInfo[1] ?? null;
-            if ($errCode === 1062) {
-                return [self::INSERT_CODE_DUPLICATE, $exception->errorInfo[2] ?? $exception->getMessage()];
+            $errMsg = $exception->errorInfo[2] ?? null;
+            if (null !== $errMsg) {
+                $errMsg = (string)$errMsg;
+            }
+            if ($errCode === self::INSERT_CODE_DUPLICATE) {
+                return [self::INSERT_CODE_DUPLICATE, $errMsg ?? $exception->getMessage()];
             }
             throw $exception;
         }
