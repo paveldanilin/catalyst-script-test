@@ -8,18 +8,6 @@ Please find a logic test script as `foobar.php`.
 - PDO MySQL extension
 - composer (2.3.3)
 
-### CSV format
-A comma sign is used as a separator.
-The first line of the CSV file represents a header line (`name,surname,email`).
-
-Columns description (for more details see the Configuration section)
-
-| Column    | DB                                        | Transformer    | Validator                            |
-|-----------|-------------------------------------------|----------------|--------------------------------------|
-| name      | varchar(255), nullable=false              | lower, ucfirst | string: min_length=1, max_length=255 |
-| surname   | varchar(255), nullable=false              | lower, ucfirst | string: min_length=1, max_length=255 |
-| email     | varchar(255), nullable=false, unique=true | lower          | email                                | 
-
 ### Distribution
 - As a standalone phar file (see the Build section)
 - As a folder (dependencies must be installed, see the Build section)
@@ -38,9 +26,66 @@ usage: user_upload.php  [-u=username] [-p=password] [-h=hostname|hostname:port] 
 [--log] Write log
 ```
 
+#### Create table
+Creates a table in the DB (to change the table name see the Configuration section).
+
+Mandatory options:
+- `-h` A database hostname
+- `-d` A database name
+- `-u` Username
+- `-p` Password
+```console
+% php user_upload.php --create_table -h 127.0.0.1 -d customer -u user -p password
+Table has been created
+```
+
+#### Upload data
+Mandatory options:
+- `-h` A database hostname
+- `-d` A database name
+- `-u` Username
+- `-p` Password
+```console
+% php user_upload.php --file ./data/users.csv -h 127.0.0.1 -d customer -u user -p password
+* Processed:11
+* Inserted: 11
+* Skipped:  0
+```
+
+#### Dry run (--dry_run)
+Should be used with the `--file` directive.
+CSV file will be parsed and validated, but all DB interactions will be skipped.
+
+Mandatory options:
+- `-h` A database hostname
+- `-d` A database name
+- `-u` Username
+- `-p` Password
+```console
+% php user_upload.php --file ./data/users.csv -h 127.0.0.1 -d customer -u user -p password --dry_run
+* Processed:11
+* Inserted: 0
+* Skipped:  0
+```
+
+#### Log (--log)
+In case when we want to keep history of the script run in the separate file we can specify the `--log` option.
+
+The `--log` option can be used with both `--file` and `--create_table` directives.
+
+The log file will be created at the same directory with the script/phar file (file name template: `uploader-[year]-[month]-[day].log`).
+
+```console
+% php user_upload.php --file ./data/users.csv -h 127.0.0.1 -d customer -u user -p password --dry_run --log
+* Processed:11
+* Inserted: 0
+* Skipped:  0
+```
+
 #### Output
 
 In case of any failure the first block will be an error block.
+
 Each error has a reference to a line in the CSV file.
 
 #### Error output
@@ -62,9 +107,20 @@ Email is not valid email='edward@jikes@com.au' at line 12
 - `Inserted` - a number of inserted rows into DB.
 - `Skipped` - a number of skipped rows. A row can be skipped in case of whether invalid value or DB error.
 
-### Log
-In case when we want to keep history of the script run we can specify the `--log` option.
-Then the log file will be created at the same directory with the script/phar file (file name template: `uploader-[year]-[month]-[day].log`).
+
+### CSV format
+A comma sign is used as a separator (to change the separator sign see the Configuration section).
+
+The first line of the CSV file represents a header line (`name,surname,email`).
+
+Columns description (for more details see the Configuration section)
+
+| Column    | DB                                        | Transformer    | Validator                            |
+|-----------|-------------------------------------------|----------------|--------------------------------------|
+| name      | varchar(255), nullable=false              | lower, ucfirst | string: min_length=1, max_length=255 |
+| surname   | varchar(255), nullable=false              | lower, ucfirst | string: min_length=1, max_length=255 |
+| email     | varchar(255), nullable=false, unique=true | lower          | email                                |
+
 
 ### Configuration
 A main configuration is located at the `config.php` file.
@@ -123,6 +179,7 @@ Each column can be described by means of the following parameters:
 ]
 ```
 
+
 ### Build
 A composer tool is required (Tested with the `2.3.3` version).
 
@@ -131,11 +188,14 @@ Install dependencies:
 
 #### PHAR
 To build an executable phar run `composer box`.
-A built executable can be found at `./build/user_upload.phar`
+
+The built executable can be found at `./build/user_upload.phar`
+
 
 ### Test
 PHPstan + UnitTest
 - `composer test`
+
 
 ### Docker
 Test MySQL server
@@ -147,23 +207,3 @@ Test MySQL server
 * User: `app`
 * Password: `password`
 * Host: `127.0.0.1`
-
-#### Upload file
-```console
-php user_upload.php --file ./data/users.csv -u user -p password -d customer -h 127.0.0.1
-```
-
-#### Upload file with dry_run
-```console
-php user_upload.php --file ./data/users.csv -u user -p password -d customer -h 127.0.0.1 --dry_run
-```
-
-#### Create table 
-```console
-php user_upload.php --create_table -u user -p password -h 127.0.0.1 -d customer
-```
-
-#### Different MySQL port (for example 6603)
-```console
-php user_upload.php --create_table -u user -p password -h 127.0.0.1:6603 -d customer
-```
