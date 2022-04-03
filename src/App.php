@@ -2,19 +2,25 @@
 
 namespace Pada\CatalystScriptTest;
 
+use Monolog\Handler\RotatingFileHandler;
+use Monolog\Logger;
+use Monolog\Processor\PsrLogMessageProcessor;
 use Pada\CatalystScriptTest\Console\Console;
 use Pada\CatalystScriptTest\Console\ConsoleInterface;
 use Pada\CatalystScriptTest\Console\InputInterface;
 use Pada\CatalystScriptTest\Console\OptionDefinition;
 use Pada\CatalystScriptTest\Console\OutputInterface;
+use Psr\Log\LoggerInterface;
 
 final class App
 {
     private ConsoleInterface $console;
     private UserUploadServiceInterface $userUploadService;
+    private ConfigInterface $config;
 
-    public function __construct(UserUploadServiceInterface $userUploadService)
+    public function __construct(UserUploadServiceInterface $userUploadService, ConfigInterface $config)
     {
+        $this->config = $config;
         $this->userUploadService = $userUploadService;
         $this->console = (new Console('user_upload.php'))
             ->addDefinition(new OptionDefinition(
@@ -71,7 +77,12 @@ final class App
                 'MySQL database',
                 null,
                 'dbname'
-            ));
+            ))
+            ->addDefinition(new OptionDefinition(
+                null,
+                'log',
+                OptionDefinition::VALUE_NONE,
+                'Write log'));
     }
 
     public function run(array $argv): void
@@ -82,7 +93,12 @@ final class App
     private function uploadUsersCommand(OutputInterface $output, InputInterface $input): void
     {
         $this->checkRequiredDBOptions($output, $input);
-        $errors = $this->userUploadService->upload(
+
+        if ($input->hasOption('log')) {
+            $this->userUploadService->setLogger($this->createLogger());
+        }
+
+        $result = $this->userUploadService->upload(
             $input->getOption('file')->getValue(),
             [
                 'driver' => 'mysql',
@@ -94,14 +110,22 @@ final class App
             $input->hasOption('dry_run'),
         );
 
-        foreach ($errors as $error) {
+        foreach ($result->getErrors() as $error) {
             $output->writeln($error, ['color' => 'red']);
         }
+        $output->writeln('* Processed:' . $result->getProcessed());
+        $output->writeln('* Inserted: ' . $result->getInserted());
+        $output->writeln('* Skipped:  ' . $result->getSkipped());
     }
 
     private function createTableCommand(OutputInterface $output, InputInterface $input): void
     {
         $this->checkRequiredDBOptions($output, $input);
+
+        if ($input->hasOption('log')) {
+            $this->userUploadService->setLogger($this->createLogger());
+        }
+
         $this->userUploadService->createTable(            [
             'driver' => 'mysql',
             'dbname' => $input->getOption('d')->getValue(),
@@ -109,6 +133,7 @@ final class App
             'password' => $input->getOption('p')->getValue(),
             'host' => $input->getOption('h')->getValue()
         ]);
+
         $output->writeln('Table has been created', ['color' => 'green']);
     }
 
@@ -125,5 +150,15 @@ final class App
         if (!$input->hasOption($option)) {
             throw new \RuntimeException('Option [-' . $option . '] is required');
         }
+    }
+
+    private function createLogger(): LoggerInterface
+    {
+        return (new Logger('uploader'))
+            ->pushHandler(new RotatingFileHandler(
+                $this->config->getLogDir() . $this->config->getLogFilename(),
+                30,
+                Logger::DEBUG))
+            ->pushProcessor(new PsrLogMessageProcessor());
     }
 }

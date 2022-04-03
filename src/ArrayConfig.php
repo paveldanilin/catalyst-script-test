@@ -25,4 +25,14 @@ final class ArrayConfig implements ConfigInterface
     {
         return $this->config['csvSeparator'] ?? ',';
     }
+
+    public function getLogDir(): string
+    {
+        return $this->config['log']['dir'] ?? '.' . DIRECTORY_SEPARATOR;
+    }
+
+    public function getLogFilename(): string
+    {
+        return $this->config['log']['filename'] ?? 'application.log';
+    }
 }

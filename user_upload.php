@@ -13,17 +13,19 @@ use Pada\CatalystScriptTest\Validator\ValidatorManager;
 
 require "./vendor/autoload.php";
 
-$validatorManager = (new ValidatorManager())
-    ->addValidator(new EmailValidator());
-
-$transformerManager = (new TransformerManager())
-    ->addTransformer(new StringLowerTransformer())
-    ->addTransformer(new StringUcfirstTransformer());
-
 // Can be read from the external config file
 // Keep it in a script for simplicity
 $configData = include './config.php';
 $config = new ArrayConfig($configData);
+
+// Validator manager
+$validatorManager = (new ValidatorManager())
+    ->addValidator(new EmailValidator());
+
+// Transformer manager
+$transformerManager = (new TransformerManager())
+    ->addTransformer(new StringLowerTransformer())
+    ->addTransformer(new StringUcfirstTransformer());
 
 $userUploadService = new UserUploadService(
     $config,
@@ -33,4 +35,4 @@ $userUploadService = new UserUploadService(
     $transformerManager
 );
 
-(new App($userUploadService))->run($argv);
+(new App($userUploadService, $config))->run($argv);
