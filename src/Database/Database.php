@@ -66,10 +66,37 @@ class Database implements DatabaseInterface
         return $this->lastError;
     }
 
+    public function insertBatch(string $tableName, array $batch): void
+    {
+        if (empty($batch)) {
+            return;
+        }
+
+        $fields = \array_keys($batch[0] ?? []);
+        $placeholders = [];
+        $values = [];
+        foreach ($batch as $row) {
+            $placeholders[] = '(' . \rtrim(\str_repeat('?,', \count($row)) , ',') . ')';
+            $values = \array_merge($values, \array_values($row)); // TODO: should be improved due to a performance impact
+        }
+        $sql = 'INSERT INTO `' . $tableName . '` (' . \implode(',', $fields) . ') VALUES ' . \implode(',', $placeholders);
+
+        $this->beginTransaction();
+        try {
+            $s = $this->db->prepare($sql);
+            $s->execute($values);
+            $this->commit();
+        } catch (\PDOException $exception) {
+            $this->db->rollBack();
+            throw $exception;
+        }
+    }
+
     private function doOpen(array $options): bool
     {
         try {
             $this->db = $this->createConnection($options);
+            $this->db->setAttribute(\PDO::ATTR_ERRMODE, \PDO::ERRMODE_EXCEPTION);
             return true;
         } catch (\PDOException $PDOException) {
             $this->lastError = $PDOException->getMessage();

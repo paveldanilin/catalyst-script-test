@@ -25,7 +25,7 @@ $transformerManager = (new TransformerManager())
 $config = new ArrayConfig([
     // A table name that is meant to hold the imported data
     'importTableName' => 'users',
-    // CSV separator sign
+    // A CSV separator sign
     'csvSeparator' => ',',
     // Metadata (DB,Transformer,Validator)
     'columnMapping' => [

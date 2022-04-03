@@ -10,6 +10,9 @@ use Pada\CatalystScriptTest\Validator\ValidatorManagerInterface;
 
 final class UserUploadService implements UserUploadServiceInterface
 {
+    private const INSERT_CODE_OK = 0;
+    private const INSERT_CODE_DUPLICATE = 100;
+
     private DatabaseInterface $database;
     private ReaderInterface $reader;
     private ValidatorManagerInterface $validatorManager;
@@ -38,14 +41,14 @@ final class UserUploadService implements UserUploadServiceInterface
             throw new \RuntimeException('Table "'.$this->config->getTableName().'" not exists');
         }
 
-        //$this->database->beginTransaction();
-
         $columnMapping = $this->config->getColumnMapping();
         $csvOpts = [
             'filename' => $csvFilename,
             'with_headers' => true, // Treats the first line as a header line
         ];
         $errors = [];
+        $batchSize = 1;
+        $batch = [];
 
         foreach ($this->reader->next($csvOpts) as $row) {
             [$rowNum, $rowData] = $row;
@@ -58,7 +61,7 @@ final class UserUploadService implements UserUploadServiceInterface
                 try {
                     $this->validatorManager->validate($columnValue, $validators);
                 } catch (InvalidValueException $invalidValueException) {
-                    $errors[] = $invalidValueException->getMessage() . ' [' . $columnValue . '] at line ' . ($rowNum + 1);
+                    $errors[] = $invalidValueException->getMessage() . ' \'' . $columnValue . '\' at line ' . ($rowNum + 1);
                     $isDataValid = false;
                     break; // The value is invalid, skip the row
                 }
@@ -69,13 +72,41 @@ final class UserUploadService implements UserUploadServiceInterface
             }
 
             if ($isDataValid) {
-                print "INSERT ->" . print_r($dataToInsert, true) . "\n";
+                $batch[] = $dataToInsert;
+                if (\count($batch) === $batchSize) {
+                    [$opCode, $opMessage] = $this->insertBatch($batch);
+                    if (self::INSERT_CODE_OK !== $opCode) {
+                        $errors[] = $opMessage . ' at line ' . ($rowNum + 1);
+                    }
+                    $batch = [];
+                }
             }
         }
 
-        //$this->database->commit();
+        [$opCode, $opMessage] = $this->insertBatch($batch);
+        if (self::INSERT_CODE_OK !== $opCode) {
+            $errors[] = $opMessage  . ' at line ' . ($rowNum + 1);
+        }
 
         return $errors;
+    }
+
+    /**
+     * @param array $batch
+     * @return array<int, string|null> <operationCode, message>
+     */
+    private function insertBatch(array $batch): array
+    {
+        try {
+            $this->database->insertBatch($this->config->getTableName(), $batch);
+            return [0, null];
+        } catch (\PDOException $exception) {
+            $errCode = $exception->errorInfo[1] ?? null;
+            if ($errCode === 1062) {
+                return [100, $exception->errorInfo[2] ?? $exception->getMessage()];
+            }
+            throw $exception;
+        }
     }
 
     public function createTable(array $dbOptions): void
