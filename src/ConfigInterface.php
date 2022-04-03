@@ -6,4 +6,5 @@ interface ConfigInterface
 {
     public function getColumnMapping(): array;
     public function getTableName(): string;
+    public function getCsvSeparator(): string;
 }

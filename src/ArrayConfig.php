@@ -2,7 +2,7 @@
 
 namespace Pada\CatalystScriptTest;
 
-final class Config implements ConfigInterface
+final class ArrayConfig implements ConfigInterface
 {
     private array $config;
 
@@ -19,5 +19,10 @@ final class Config implements ConfigInterface
     public function getTableName(): string
     {
         return $this->config['importTableName'] ?? '';
+    }
+
+    public function getCsvSeparator(): string
+    {
+        return $this->config['csvSeparator'] ?? ',';
     }
 }
