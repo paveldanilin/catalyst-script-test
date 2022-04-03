@@ -32,7 +32,7 @@ final class UserUploadService implements UserUploadServiceInterface
         $this->transformerManager = $transformerManager;
     }
 
-    public function upload(string $csvFilename, array $dbOptions): array
+    public function upload(string $csvFilename, array $dbOptions, bool $dryRun): array
     {
         // TODO: read CSV
         $this->dbConnect($dbOptions);
@@ -74,18 +74,22 @@ final class UserUploadService implements UserUploadServiceInterface
             if ($isDataValid) {
                 $batch[] = $dataToInsert;
                 if (\count($batch) === $batchSize) {
-                    [$opCode, $opMessage] = $this->insertBatch($batch);
-                    if (self::INSERT_CODE_OK !== $opCode) {
-                        $errors[] = $opMessage . ' at line ' . ($rowNum + 1);
+                    if (!$dryRun) {
+                        [$opCode, $opMessage] = $this->insertBatch($batch);
+                        if (self::INSERT_CODE_OK !== $opCode) {
+                            $errors[] = $opMessage . ' at line ' . ($rowNum + 1);
+                        }
                     }
                     $batch = [];
                 }
             }
         }
 
-        [$opCode, $opMessage] = $this->insertBatch($batch);
-        if (self::INSERT_CODE_OK !== $opCode) {
-            $errors[] = $opMessage  . ' at line ' . ($rowNum + 1);
+        if (!$dryRun) {
+            [$opCode, $opMessage] = $this->insertBatch($batch);
+            if (self::INSERT_CODE_OK !== $opCode) {
+                $errors[] = $opMessage . ' at line ' . ($rowNum + 1);
+            }
         }
 
         return $errors;
@@ -99,11 +103,11 @@ final class UserUploadService implements UserUploadServiceInterface
     {
         try {
             $this->database->insertBatch($this->config->getTableName(), $batch);
-            return [0, null];
+            return [self::INSERT_CODE_OK, null];
         } catch (\PDOException $exception) {
             $errCode = $exception->errorInfo[1] ?? null;
             if ($errCode === 1062) {
-                return [100, $exception->errorInfo[2] ?? $exception->getMessage()];
+                return [self::INSERT_CODE_DUPLICATE, $exception->errorInfo[2] ?? $exception->getMessage()];
             }
             throw $exception;
         }

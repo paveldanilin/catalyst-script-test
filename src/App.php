@@ -90,7 +90,8 @@ final class App
                 'user' => $input->getOption('u')->getValue(),
                 'password' => $input->getOption('p')->getValue(),
                 'host' => $input->getOption('h')->getValue()
-            ]
+            ],
+            $input->hasOption('dry_run'),
         );
 
         foreach ($errors as $error) {
