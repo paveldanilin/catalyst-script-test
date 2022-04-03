@@ -69,17 +69,17 @@ Then the log file will be created at the same directory with the script/phar fil
 ### Configuration
 A main configuration is located at the `config.php` file.
 
-- *importTableName*  A database table name that holds uploaded data (default: `users`)
-- *csvSeparator* A separator sign that is used at CSV file (default: `,`)
-- *columnMapping* Holds columns metadata. A key stands for a column name. A value stands for an array of parameters.
+- `importTableName`  A database table name that holds uploaded data (default: `users`)
+- `csvSeparator` A separator sign that is used at CSV file (default: `,`)
+- `columnMapping` Holds columns metadata. A key stands for a column name. A value stands for an array of parameters.
 To add a new column just describe metadata in this section.
 
 Each column can be described by means of the following parameters:
-- *type* [string|integer] A value data type.
-- *nullable* [bool] Allows null value.
-- *unique* [bool] Unique constraint.
-- *validator* [array] An array of validators that will be applied to the column value before inserting. See description below.
-- *transformer* [array] An array of transformers that will be applied to the column value. See description below.
+- `type` [string|integer] A value data type.
+- `nullable` [bool] Allows null value.
+- `unique` [bool] Unique constraint.
+- `validator` [array] An array of validators that will be applied to the column value before inserting. See description below.
+- `transformer` [array] An array of transformers that will be applied to the column value. See description below.
 
 
 #### Supported validators:
