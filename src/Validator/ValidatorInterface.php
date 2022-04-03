@@ -8,8 +8,9 @@ interface ValidatorInterface
 
     /**
      * @param mixed $value
+     * @param array $options
      * @return void
      * @throws InvalidValueException
      */
-    public function validate($value): void;
+    public function validate($value, array $options): void;
 }

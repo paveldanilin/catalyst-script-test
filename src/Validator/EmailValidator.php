@@ -13,7 +13,7 @@ final class EmailValidator implements ValidatorInterface
         return self::NAME;
     }
 
-    public function validate($value): void
+    public function validate($value, array $options): void
     {
         if (!\is_string($value)) {
             throw new InvalidValueException($this,'Email must be a string');

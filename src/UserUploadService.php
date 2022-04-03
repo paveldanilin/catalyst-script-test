@@ -75,7 +75,7 @@ final class UserUploadService implements UserUploadServiceInterface
                 try {
                     $this->validatorManager->validate($columnValue, $validators);
                 } catch (InvalidValueException $invalidValueException) {
-                    $errors[] = $invalidValueException->getMessage() . ' \'' . $columnValue . '\' at line ' . ($rowNum + 1);
+                    $errors[] = $invalidValueException->getMessage() . ' ' . $columnName . '=\'' . $columnValue . '\' at line ' . ($rowNum + 1);
                     $isDataValid = false;
                     $this->logger->warning('Invalid value at the "' . $columnName . '" column value=[' . $columnValue . '] a row will be skipped', [
                         'validator' => $invalidValueException->getValidator()->getName(),
@@ -124,6 +124,7 @@ final class UserUploadService implements UserUploadServiceInterface
         $this->logger->debug('After upload', [
             'inserted_rows' => $inserted,
             'processed_rows' => $rowNum,
+            'skipped_rows' => $skipped,
         ]);
 
         return new UploadResult($inserted, $rowNum, $skipped, $errors);

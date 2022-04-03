@@ -9,6 +9,7 @@ use Pada\CatalystScriptTest\Transformer\StringUcfirstTransformer;
 use Pada\CatalystScriptTest\Transformer\TransformerManager;
 use Pada\CatalystScriptTest\UserUploadService;
 use Pada\CatalystScriptTest\Validator\EmailValidator;
+use Pada\CatalystScriptTest\Validator\StringValidator;
 use Pada\CatalystScriptTest\Validator\ValidatorManager;
 
 require "./vendor/autoload.php";
@@ -20,7 +21,8 @@ $config = new ArrayConfig($configData);
 
 // Validator manager
 $validatorManager = (new ValidatorManager())
-    ->addValidator(new EmailValidator());
+    ->addValidator(new EmailValidator())
+    ->addValidator(new StringValidator());
 
 // Transformer manager
 $transformerManager = (new TransformerManager())
