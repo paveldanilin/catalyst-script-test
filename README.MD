@@ -1,3 +1,6 @@
+# Logic
+Please find a logic test script as `foobar.php`.
+
 # User upload
 
 ### Requirements
