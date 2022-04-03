@@ -6,7 +6,7 @@
 - composer (2.3.3)
 
 ### Distribution
-- As a phar file (see the Build section)
+- As a standalone phar file (see the Build section)
 - As a folder (dependencies must be installed, see the Build section)
 
 ### Usage
